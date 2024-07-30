@@ -7,6 +7,7 @@ from sklearn.metrics import root_mean_squared_error
 from sklearn.linear_model import Ridge
 from sklearn import linear_model
 from sklearn.neural_network import MLPRegressor
+from sklearn.multioutput import MultiOutputRegressor
 import pickle
 import warnings
 
@@ -70,7 +71,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 svr_model, svr_rmse = build_models(SVR(), X_train, y_train, X_test, y_test)
 
 # export
-export_model(svr_model, '../svr.pkl')
+export_model(svr_model, '../res/svr.pkl')
 
 # hyper parameter tuning
 svr_param_grid = {'kernel': ('linear', 'rbf', 'sigmoid', 'poly'),
@@ -78,13 +79,13 @@ svr_param_grid = {'kernel': ('linear', 'rbf', 'sigmoid', 'poly'),
 tuned_svr, tuned_svr_rmse = tune_models(SVR(), svr_param_grid, X_train, y_train, X_test, y_test)
 
 # export
-export_model(tuned_svr, '../tuned_svr.pkl')
+export_model(tuned_svr, '../res/tuned_svr.pkl')
 
 # linear regression model
 ridge_model, ridge_rmse = build_models(Ridge(), X_train, y_train, X_test, y_test)
 
 # export
-export_model(ridge_model, '../ridge.pkl')
+export_model(ridge_model, '../res/ridge.pkl')
 
 # hyper tuned ridge regression
 param_ridge = {'solver': ('auto', 'svd', 'lsqr'),
@@ -92,20 +93,20 @@ param_ridge = {'solver': ('auto', 'svd', 'lsqr'),
 tuned_ridge, tuned_ridge_rmse = tune_models(Ridge(), param_ridge, X_train, y_train, X_test, y_test)
 
 # export
-export_model(tuned_ridge, '../tuned_ridge.pkl')
+export_model(tuned_ridge, '../res/tuned_ridge.pkl')
 
 # Lasso model
 lasso_model, lasso_rmse = build_models(linear_model.Lasso(), X_train, y_train, X_test, y_test)
 
 # export
-export_model(lasso_model, '../lasso.pkl')
+export_model(lasso_model, '../res/lasso.pkl')
 
 # hyper tuned lasso regression
 param_lasso = {'alpha': [0.01, 0.1, 0.5, 1, 1.5, 5, 10, 20, 50]}
 tuned_lasso_model, tuned_lasso_rmse = tune_models(linear_model.Lasso(), param_lasso, X_train, y_train, X_test, y_test)
 
 # export
-export_model(tuned_lasso_model, '../tuned_lasso.pkl')
+export_model(tuned_lasso_model, '../res/tuned_lasso.pkl')
 
 # neural network
 nn = MLPRegressor(random_state=rand, activation='relu', alpha=10, hidden_layer_sizes=[18, 24, 18],
@@ -113,7 +114,7 @@ nn = MLPRegressor(random_state=rand, activation='relu', alpha=10, hidden_layer_s
 nn, nn_rmse = build_models(nn, X_train, y_train, X_test, y_test)
 
 # export
-export_model(nn, '../nn.pkl')
+export_model(nn, '../res/nn.pkl')
 
 # hyper tuned nn
 param_nn = {'solver': ('sgd', 'adam'), 'alpha': [.0001, .001, .01, 1, 5, 10, 20],
@@ -123,4 +124,14 @@ param_nn = {'solver': ('sgd', 'adam'), 'alpha': [.0001, .001, .01, 1, 5, 10, 20]
 tuned_nn_model, tuned_nn_rmse = tune_models(MLPRegressor(random_state=rand), param_nn, X_train, y_train, X_test, y_test)
 
 # export
-export_model(tuned_nn_model, '../tuned_nn.pkl')
+export_model(tuned_nn_model, '../res/tuned_nn.pkl')
+
+# multi-task prediction
+y_multi = model_df[['MWh', 'MWh Before Inverter Loss']]
+X_train_multi, X_test_multi, y_train_multi, y_test_multi = train_test_split(
+    X_scaled, y_multi, test_size=0.30, random_state=rand)
+
+multi_nn, multi_nn_rmse = build_models(MultiOutputRegressor(nn), X_train_multi, y_train_multi, X_test_multi, y_test_multi)
+
+# export
+export_model(multi_nn, '../res/multi_nn.pkl')

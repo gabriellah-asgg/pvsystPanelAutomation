@@ -1,14 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import GridSearchCV
-from sklearn.svm import SVR
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import root_mean_squared_error
-from sklearn.linear_model import Ridge
-from sklearn import linear_model
-from sklearn.neural_network import MLPRegressor
-import pickle
 
 # random state
 rand = 42
