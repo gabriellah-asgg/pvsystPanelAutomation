@@ -62,6 +62,7 @@ y = model_df['MWh']
 X = model_df.drop(['kWh', 'MWh', 'MWh Before Inverter Loss', 'Conversion Loss Difference (MWh)', 'Conversion Loss'],
                   axis=1)
 X_scaled = scaler.fit_transform(X)
+export_model(scaler, '../res/scaler.pkl')
 
 # split for train and test
 X_train, X_test, y_train, y_test = train_test_split(
@@ -121,17 +122,18 @@ param_nn = {'solver': ('sgd', 'adam'), 'alpha': [.0001, .001, .01, 1, 5, 10, 20]
             'learning_rate': ('constant', 'adaptive'),
             'learning_rate_init': [.001, .01, .1], 'activation': ('logistic', 'relu'),
             'hidden_layer_sizes': [[10, 20, 20, 10], [20, 50, 20], [10, 15, 20, 20, 15, 10]]}
-tuned_nn_model, tuned_nn_rmse = tune_models(MLPRegressor(random_state=rand), param_nn, X_train, y_train, X_test, y_test)
+#tuned_nn_model, tuned_nn_rmse = tune_models(MLPRegressor(random_state=rand), param_nn, X_train, y_train, X_test, y_test)
 
 # export
-export_model(tuned_nn_model, '../res/tuned_nn.pkl')
+#export_model(tuned_nn_model, '../res/tuned_nn.pkl')
 
 # multi-task prediction
 y_multi = model_df[['MWh', 'MWh Before Inverter Loss']]
 X_train_multi, X_test_multi, y_train_multi, y_test_multi = train_test_split(
     X_scaled, y_multi, test_size=0.30, random_state=rand)
 
-multi_nn, multi_nn_rmse = build_models(MultiOutputRegressor(nn), X_train_multi, y_train_multi, X_test_multi, y_test_multi)
+multi_nn, multi_nn_rmse = build_models(MultiOutputRegressor(nn), X_train_multi, y_train_multi, X_test_multi,
+                                       y_test_multi)
 
 # export
 export_model(multi_nn, '../res/multi_nn.pkl')
