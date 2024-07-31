@@ -32,6 +32,7 @@ scaler = pickle.load(open('../res/scaler.pkl', 'rb'))
 
 # get empty rows to predict
 empty_rows = display_df[display_df['MWh'] == 0]
+empty_rows = empty_rows[(empty_rows.index.get_level_values('Sub-Section').str.strip() != 'Totals') & (empty_rows.index.get_level_values('Sub-Section').str.strip() != 'Grand Totals')]
 for index, row in empty_rows.iterrows():
     num_panels = row.iloc[0]
     section = index[0]
@@ -54,19 +55,20 @@ for index, row in empty_rows.iterrows():
     conversion_loss_diff = mwh - mwh_before_loss
     conversion_loss = (mwh_before_loss - mwh) / mwh_before_loss
 
-    new_row = pd.DataFrame(
-        {'# of PV Panels': [int(num_panels)], 'Area (m2)': [area], 'DC System Size (kW)': [dc_system_size], 'kWh': kwh,
+    new_row = pd.Series(
+        {'# of PV Panels': int(num_panels), 'Area (m2)': area, 'DC System Size (kW)': dc_system_size, 'kWh': kwh,
          'MWh': mwh, 'MWh Before Inverter Loss': mwh_before_loss,
          'Conversion Loss Difference (MWh)': conversion_loss_diff,
-         'Conversion Loss': conversion_loss, 'Notes/Comments': ""},
-        index=pd.MultiIndex.from_tuples([(section, subsection)], names=['Section', 'Sub-Section']))
-
-    # remove old row
-    display_df.drop(axis=0, index=(section, subsection), inplace=True)
+         'Conversion Loss': conversion_loss, 'Notes/Comments': ""}, name=('Section', 'Sub-Section'))
 
     # insert new row
-    display_df = pd.concat([display_df, new_row])
+    display_df.loc[(section, subsection)] = new_row
 
-display_df.sort_index(inplace=True)
-display_df['Conversion Loss'] = [str(round((loss * 100), 2)) + "%" for loss in display_df['Conversion Loss']]
-print(display_df)
+# process percentages
+display_df['Conversion Loss'] = [str((round((loss * 100), 2))) + "%" for loss in display_df['Conversion Loss']]
+
+# create new sheet with estimated values for dataframe
+new_filepath = file_path.split('.xlsx')
+new_filepath = new_filepath[0] + '_Estimate.xlsx'
+display_df.to_excel(new_filepath)
+

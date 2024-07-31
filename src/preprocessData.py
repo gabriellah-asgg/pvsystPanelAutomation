@@ -11,14 +11,30 @@ class Preprocessor:
         display_df = pd.read_excel(self.filepath, index_col=(0, 1), skiprows=1)
         display_df.rename(columns=lambda column: column.strip(), inplace=True)
         display_df.drop(labels='Unnamed: 10', axis=1, inplace=True)
-        display_df.drop(index='Totals', inplace=True)
+        # remove extra total rows
         display_df.fillna(0, inplace=True)
-        display_df = display_df[(display_df.index.get_level_values('Sub-Section').str.strip() != 'Totals') & (
-                display_df.index.get_level_values('Sub-Section').str.strip() != 'Grand Totals')]
+        totals_to_remove = (display_df.index.get_level_values('Sub-Section').str.strip() == 'Totals') & (
+                    display_df['# of PV Panels'] == 0)
+        display_df = display_df[~totals_to_remove]
+        grand_totals_to_remove = (display_df.index.get_level_values('Sub-Section').str.strip() == 'Grand Totals') & (
+                    display_df['# of PV Panels'] == 0)
+        display_df = display_df[~grand_totals_to_remove]
+        display_df = display_df.apply(pd.to_numeric, errors='coerce')
+        display_df.dropna(inplace=True)
 
         # create dataframe to use for model
-        model_df = display_df.reset_index(drop=True)
-        model_df = model_df.iloc[:, :-1]
+
+        # remove totals
+        totals_to_remove = (display_df.index.get_level_values('Sub-Section').str.strip() == 'Totals')
+        model_df = display_df[~totals_to_remove]
+
+        # remove grand totals
+        grand_totals_to_remove = (model_df.index.get_level_values('Sub-Section').str.strip() == 'Grand Totals')
+        model_df = model_df[~grand_totals_to_remove]
+        model_df = model_df.drop(columns=['Notes/Comments'])
+
+        # remove section indexes
+        model_df.reset_index(drop=True, inplace=True)
 
         # make sure all inputs are numeric
         for index, row in model_df.iterrows():
