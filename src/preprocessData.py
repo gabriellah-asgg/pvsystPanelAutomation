@@ -1,5 +1,4 @@
 import pandas as pd
-import pickle
 
 
 class Preprocessor:
@@ -23,8 +22,6 @@ class Preprocessor:
         grand_totals_to_remove = (display_df.index.get_level_values('Sub-Section').str.strip() == 'Grand Totals') & (
                     display_df['# of PV Panels'] == 0)
         display_df = display_df[~grand_totals_to_remove]
-        #display_df = display_df.apply(pd.to_numeric, errors='coerce')
-        #display_df.dropna(inplace=True)
 
         # create dataframe to use for model
 

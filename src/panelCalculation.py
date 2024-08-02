@@ -1,6 +1,6 @@
 import pickle
 
-import numpy as np
+
 import pandas as pd
 
 from preprocessData import Preprocessor
@@ -19,21 +19,21 @@ def get_user_input():
 
 def populate_totals(export_dataframe):
     sections = export_dataframe.index.levels[0]
-    subsections = export_dataframe.index.levels[1]
-    for section in sections:
-        section_values = export_dataframe.loc[section]
+    for current_section in sections:
+        section_values = export_dataframe.loc[current_section]
         section_values = section_values[~(section_values.index.get_level_values('Sub-Section').str.strip() == 'Totals')]
-        totals = []
+        totals = {}
         for column in export_dataframe.columns:
             if column != 'Notes/Comments':
                 # ensure all inputs are numeric
                 section_values[column] = pd.to_numeric(section_values[column], errors='coerce')
                 section_values[column].fillna(0, inplace=True)
                 col_sum = section_values[column].sum()
-                totals.append(col_sum)
-        totals.append("")
-        new_row = totals
-        export_dataframe.loc[(section, 'Totals')] = new_row
+                totals[column] = col_sum
+            else:
+                totals[column] = ""
+        new_total_row = pd.DataFrame(totals, index=[(current_section, 'Totals')])
+        export_dataframe.loc[(current_section, 'Totals')] = new_total_row
     return export_dataframe
 
 
@@ -48,9 +48,9 @@ def calculate_grand_totals(export_dataframe):
         # if column is notes/comments append empty string
         else:
             grand_totals['Notes/Comments'] = ""
-    new_row = pd.DataFrame(grand_totals, index=[('Grand Totals', 'Grand Totals')])
+    new_grand_total_row = pd.DataFrame(grand_totals, index=[('Grand Totals', 'Grand Totals')])
     # add in grand totals
-    export_dataframe = pd.concat([export_dataframe, new_row])
+    export_dataframe = pd.concat([export_dataframe, new_grand_total_row])
     return export_dataframe
 
 
