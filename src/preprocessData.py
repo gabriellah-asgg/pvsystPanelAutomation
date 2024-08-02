@@ -11,6 +11,10 @@ class Preprocessor:
         display_df = pd.read_excel(self.filepath, index_col=(0, 1), skiprows=1)
         display_df.rename(columns=lambda column: column.strip(), inplace=True)
         display_df.drop(labels='Unnamed: 10', axis=1, inplace=True)
+        display_df.index = pd.MultiIndex.from_tuples(
+            [(i.strip(), j.strip()) for i, j in display_df.index],
+            names=display_df.index.names
+        )
         # remove extra total rows
         display_df.fillna(0, inplace=True)
         totals_to_remove = (display_df.index.get_level_values('Sub-Section').str.strip() == 'Totals') & (
@@ -19,8 +23,8 @@ class Preprocessor:
         grand_totals_to_remove = (display_df.index.get_level_values('Sub-Section').str.strip() == 'Grand Totals') & (
                     display_df['# of PV Panels'] == 0)
         display_df = display_df[~grand_totals_to_remove]
-        display_df = display_df.apply(pd.to_numeric, errors='coerce')
-        display_df.dropna(inplace=True)
+        #display_df = display_df.apply(pd.to_numeric, errors='coerce')
+        #display_df.dropna(inplace=True)
 
         # create dataframe to use for model
 
