@@ -22,18 +22,17 @@ def populate_totals(export_dataframe):
     for current_section in sections:
         section_values = export_dataframe.loc[current_section]
         section_values = section_values[~(section_values.index.get_level_values('Sub-Section').str.strip() == 'Totals')]
-        totals = {}
+        totals = []
         for column in export_dataframe.columns:
             if column != 'Notes/Comments':
                 # ensure all inputs are numeric
                 section_values[column] = pd.to_numeric(section_values[column], errors='coerce')
                 section_values[column].fillna(0, inplace=True)
                 col_sum = section_values[column].sum()
-                totals[column] = col_sum
+                totals.append(col_sum)
             else:
-                totals[column] = ""
-        new_total_row = pd.DataFrame(totals, index=[(current_section, 'Totals')])
-        export_dataframe.loc[(current_section, 'Totals')] = new_total_row
+                totals.append("")
+        export_dataframe.loc[(current_section, 'Totals')] = totals
     return export_dataframe
 
 
@@ -98,12 +97,11 @@ for index, row in empty_rows.iterrows():
     # insert new row
     display_df.loc[(section, subsection)] = new_row
 
-# populate totals
-populate_totals(display_df)
-
-
 # remove grand totals
 display_df = display_df[~(display_df.index.get_level_values('Sub-Section') == 'Grand Totals')]
+
+# populate totals
+populate_totals(display_df)
 
 # calculate new grand totals and add in
 display_df = calculate_grand_totals(display_df)
