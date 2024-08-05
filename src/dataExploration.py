@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 # random state
 rand = 42
@@ -30,6 +32,10 @@ for index, row in model_df.iterrows():
 model_df = model_df[model_df['MWh'] != 0]
 print(model_df.info())
 
+# create heatmap
+corr_matrix = model_df.corr()
+plt.figure()
+sns.heatmap(corr_matrix)
 
 # create a histogram
 for column in model_df.columns:
