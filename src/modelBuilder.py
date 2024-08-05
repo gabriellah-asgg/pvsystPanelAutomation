@@ -9,6 +9,11 @@ from sklearn import linear_model
 from sklearn.neural_network import MLPRegressor
 from sklearn.multioutput import MultiOutputRegressor
 import pickle
+from sklearn.datasets import make_regression
+from sklearn.neighbors import KNeighborsRegressor
+import pandas as pd
+import smogn
+import matplotlib.pyplot as plt
 import warnings
 
 
@@ -137,3 +142,41 @@ multi_nn, multi_nn_rmse = build_models(MultiOutputRegressor(nn), X_train_multi, 
 
 # export
 export_model(multi_nn, '../res/multi_nn.pkl')
+
+# multitask lasso
+multitask_lasso = linear_model.MultiTaskLasso(alpha=0.1, random_state=rand)
+multi_lasso, multi_lasso_rmse = build_models(multitask_lasso, X_train_multi, y_train_multi, X_test_multi,
+                                             y_test_multi)
+# export
+export_model(multi_lasso, '../res/multi_lasso.pkl')
+
+# knn reg
+multi_knn, multi_knn_rmse = build_models(KNeighborsRegressor(), X_train_multi, y_train_multi, X_test_multi,
+                                         y_test_multi)
+
+# export
+export_model(multi_knn, '../res/multi_knn.pkl')
+
+# knn reg tuned
+param_knn = {'n_neighbors': [3, 5, 8, 10, 15],
+             'weights': ['uniform', 'distance'],
+             'algorithm': ['auto', 'ball_tree', 'kd_tree'],
+             'p': [1, 2]}
+tuned_multi_knn, tuned_multi_knn_rmse = tune_models(KNeighborsRegressor(), param_knn, X_train_multi, y_train_multi,
+                                                    X_test_multi, y_test_multi)
+
+# export
+export_model(tuned_multi_knn, '../res/tuned_multi_knn.pkl')
+
+# perform oversampling with SMOTE
+'''
+train_data = pd.DataFrame(X_train)
+train_data['MWh'] = y_train.to_list()
+data_smgn = smogn.smoter(data=train_data, y='MWh')
+y_oversampled = train_data['MWh']
+X_oversampled = train_data.drop(['MWh'],axis=1)
+
+plt.figure()
+plt.hist(y_oversampled)
+plt.show()
+'''

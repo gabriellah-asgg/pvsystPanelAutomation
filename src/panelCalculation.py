@@ -1,6 +1,5 @@
 import pickle
 
-
 import pandas as pd
 
 from preprocessData import Preprocessor
@@ -53,7 +52,6 @@ def calculate_grand_totals(export_dataframe):
     return export_dataframe
 
 
-# file path
 file_path = r'Q:\Projects\224008\DESIGN\ANALYSIS\00_PV\2024_07_08_PVsyst\Compiled Results.xlsx'
 
 # preprocess data
@@ -113,3 +111,4 @@ display_df['Conversion Loss'] = [str((round((loss * 100), 2))) + "%" for loss in
 new_filepath = file_path.split('.xlsx')
 new_filepath = new_filepath[0] + '_Estimate.xlsx'
 display_df.to_excel(new_filepath)
+
