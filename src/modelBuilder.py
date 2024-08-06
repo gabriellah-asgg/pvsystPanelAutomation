@@ -1,3 +1,5 @@
+import numpy as np
+
 from preprocessData import Preprocessor
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
@@ -9,12 +11,11 @@ from sklearn import linear_model
 from sklearn.neural_network import MLPRegressor
 from sklearn.multioutput import MultiOutputRegressor
 import pickle
-from sklearn.datasets import make_regression
 from sklearn.neighbors import KNeighborsRegressor
-import pandas as pd
-import smogn
 import torch
-import matplotlib.pyplot as plt
+from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
 import warnings
 
 
@@ -27,6 +28,24 @@ def export_model(model, filename):
     :return: none
     """
     pickle.dump(model, open(filename, 'wb'))
+
+
+def calc_scatter_index(rmse, y_preds, model):
+    # scatter index
+    avg_obs = 0
+    for pred in y_preds:
+        # check if pred is a list in case of multi output
+        if type(pred) is np.ndarray:
+            for p in pred:
+                avg_obs += p
+        else:
+            avg_obs += pred
+    avg_obs = avg_obs / len(y_preds)
+    si = (rmse / avg_obs) * 100
+
+    print("SI of model " + str(model.__class__.__name__) + ": " + str(si))
+
+    return si
 
 
 def build_models(model, xtrain, ytrain, xtest, ytest):
@@ -48,10 +67,7 @@ def build_models(model, xtrain, ytrain, xtest, ytest):
     print("RMSE of non-tuned " + str(model.__class__.__name__) + ": " + str(rmse))
 
     # scatter index
-    '''
-    if type(y_pred) is list:
-        for pred in y_pred:
-            '''
+    calc_scatter_index(rmse, y_pred, model)
 
     return model, rmse
 
@@ -59,6 +75,7 @@ def build_models(model, xtrain, ytrain, xtest, ytest):
 def tune_models(model, param_grid, xtrain, ytrain, xtest, ytest, cv=30):
     """
        Trains, tunes, and tests given model using given test and training sets; Calculates RMSE.
+       :param param_grid: dictionary of parameters to test with grid search
        :param model: model to train
        :param xtrain: training set of x to use
        :param ytrain: training set of y to use
@@ -79,6 +96,9 @@ def tune_models(model, param_grid, xtrain, ytrain, xtest, ytest, cv=30):
     # evaluate results
     rmse_tuned = root_mean_squared_error(ytest, y_pred_tuned)
     print("RMSE of tuned " + str(model.__class__.__name__) + ": " + str(rmse_tuned))
+
+    # scatter index
+    calc_scatter_index(rmse_tuned, y_pred_tuned, model)
 
     return hypertuned_model, rmse_tuned
 
@@ -202,6 +222,46 @@ tuned_multi_knn, tuned_multi_knn_rmse = tune_models(KNeighborsRegressor(), param
 # export
 export_model(tuned_multi_knn, '../res/tuned_multi_knn.pkl')
 
+
+# pytorch
+'''
+class MultiTaskNeuralNetwork(nn.Module):
+    def __init__(self, len_train):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(len_train, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 2),
+        )
+
+    def forward(self, x):
+        y_pred = self.linear(x)
+        return y_pred
+
+
+torch_nn = MultiTaskNeuralNetwork(len(X_train_multi))
+optimizer = torch.optim.SGD(torch_nn.parameters(), lr=0.1)
+
+loss_func = torch.nn.MSELoss()
+
+# Train the model
+losses = []
+epochs = 20
+for epoch in range(epochs):
+    for x in X_train_multi:
+        y_pred = torch_nn(x)
+        loss = loss_func(y_pred, y)
+        losses.append(loss.item())
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    print(f"epoch = {epoch}, loss = {loss}")
+print("Done training!")
+
+'''
 # perform oversampling with SMOTE
 '''
 train_data = pd.DataFrame(X_train)

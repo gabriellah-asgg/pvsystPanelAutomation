@@ -2,13 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 # random state
 rand = 42
 
 # path to file
 file_path = r'Q:\Projects\224008\DESIGN\ANALYSIS\00_PV\2024_07_08_PVsyst\Compiled Results.xlsx'
-
 
 # read excel file into pandas dataframe
 display_df = pd.read_excel(file_path, index_col=(0, 1), skiprows=1)
@@ -31,6 +29,21 @@ for index, row in model_df.iterrows():
 # get rid of any missing rows
 model_df = model_df[model_df['MWh'] != 0]
 print(model_df.info())
+
+# scatterplot
+plt.figure()
+plt.scatter(model_df['# of PV Panels'], model_df['MWh'])
+# data is very linear, gap in data from about 1000 to 1200
+
+# calculate iqr and look at outliers
+q1 = model_df['MWh'].quantile(0.25)
+q3 = model_df['MWh'].quantile(0.75)
+iqr = q3-q1
+upper_limit = q3 + (1.5 * iqr)
+lower_limit = q1 - (1.5 * iqr)
+outliers = model_df[(model_df['MWh'] > upper_limit) & (model_df['MWh'] < lower_limit)]
+print(outliers)
+
 
 # create heatmap
 corr_matrix = model_df.corr()
