@@ -47,6 +47,12 @@ def build_models(model, xtrain, ytrain, xtest, ytest):
     rmse = root_mean_squared_error(ytest, y_pred)
     print("RMSE of non-tuned " + str(model.__class__.__name__) + ": " + str(rmse))
 
+    # scatter index
+    '''
+    if type(y_pred) is list:
+        for pred in y_pred:
+            '''
+
     return model, rmse
 
 
