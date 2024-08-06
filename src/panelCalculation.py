@@ -17,6 +17,10 @@ def get_user_input():
 
 
 def populate_totals(export_dataframe):
+    """
+    :param export_dataframe: dataframe to be exported
+    :return: export dataframe with section totals added in
+    """
     sections = export_dataframe.index.levels[0]
     for current_section in sections:
         section_values = export_dataframe.loc[current_section]
@@ -36,6 +40,10 @@ def populate_totals(export_dataframe):
 
 
 def calculate_grand_totals(export_dataframe):
+    """
+    :param export_dataframe: export_dataframe: dataframe to be exported
+    :return: export dataframe with grand totals added in
+    """
     # extract total columns to sum
     totals = display_df[display_df.index.get_level_values('Sub-Section') == 'Totals']
     grand_totals = {}
@@ -84,6 +92,8 @@ for index, row in empty_rows.iterrows():
         index=pd.MultiIndex.from_tuples([(section, subsection)], names=['Section', 'Sub-Section']))
     features = scaler.transform(features)
     predictions = best_model.predict(features)
+
+    # extract features from prediction to create new row
     mwh = round(predictions[0][0], 0)
     kwh = mwh * 1000
     mwh_before_loss = round(predictions[0][1], 0)

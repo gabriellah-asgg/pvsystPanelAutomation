@@ -13,16 +13,32 @@ from sklearn.datasets import make_regression
 from sklearn.neighbors import KNeighborsRegressor
 import pandas as pd
 import smogn
+import torch
 import matplotlib.pyplot as plt
 import warnings
 
 
 # export model
 def export_model(model, filename):
+    """
+    Exports model using pickle
+    :param model: model to be exported
+    :param filename: string of filename to export model to
+    :return: none
+    """
     pickle.dump(model, open(filename, 'wb'))
 
 
 def build_models(model, xtrain, ytrain, xtest, ytest):
+    """
+    Trains and tests given model using given test and training sets; Calculates RMSE.
+    :param model: model to train
+    :param xtrain: training set of x to use
+    :param ytrain: training set of y to use
+    :param xtest: test set of x tp use
+    :param ytest: test set of y to use
+    :return: trained model, rmse score
+    """
     # make model
     model.fit(xtrain, ytrain)
     y_pred = model.predict(xtest)
@@ -35,6 +51,16 @@ def build_models(model, xtrain, ytrain, xtest, ytest):
 
 
 def tune_models(model, param_grid, xtrain, ytrain, xtest, ytest, cv=30):
+    """
+       Trains, tunes, and tests given model using given test and training sets; Calculates RMSE.
+       :param model: model to train
+       :param xtrain: training set of x to use
+       :param ytrain: training set of y to use
+       :param xtest: test set of x tp use
+       :param ytest: test set of y to use
+       :param cv: integer to use for cross validation amount
+       :return: tuned model, rmse score
+       """
     # apply hyperparameter tuning
     gridsearch = GridSearchCV(model, param_grid=param_grid, cv=cv)
     warnings.filterwarnings("ignore")
@@ -127,10 +153,12 @@ param_nn = {'solver': ('sgd', 'adam'), 'alpha': [.0001, .001, .01, 1, 5, 10, 20]
             'learning_rate': ('constant', 'adaptive'),
             'learning_rate_init': [.001, .01, .1], 'activation': ('logistic', 'relu'),
             'hidden_layer_sizes': [[10, 20, 20, 10], [20, 50, 20], [10, 15, 20, 20, 15, 10]]}
-#tuned_nn_model, tuned_nn_rmse = tune_models(MLPRegressor(random_state=rand), param_nn, X_train, y_train, X_test, y_test)
+
+# this section commented out because it takes long to run and model has already been exported
+# tuned_nn_model, tuned_nn_rmse = tune_models(MLPRegressor(random_state=rand), param_nn, X_train, y_train, X_test, y_test)
 
 # export
-#export_model(tuned_nn_model, '../res/tuned_nn.pkl')
+# export_model(tuned_nn_model, '../res/tuned_nn.pkl')
 
 # multi-task prediction
 y_multi = model_df[['MWh', 'MWh Before Inverter Loss']]
@@ -172,11 +200,17 @@ export_model(tuned_multi_knn, '../res/tuned_multi_knn.pkl')
 '''
 train_data = pd.DataFrame(X_train)
 train_data['MWh'] = y_train.to_list()
-data_smgn = smogn.smoter(data=train_data, y='MWh')
-y_oversampled = train_data['MWh']
-X_oversampled = train_data.drop(['MWh'],axis=1)
+data_smgn = smogn.smoter(data=train_data, y='MWh', under_samp=False)
+y_oversampled = data_smgn['MWh']
+X_oversampled = data_smgn.drop(['MWh'], axis=1)
 
-plt.figure()
-plt.hist(y_oversampled)
-plt.show()
+# model with oversampling
+nn = MLPRegressor(random_state=rand, activation='relu', alpha=10, hidden_layer_sizes=[18, 24, 18],
+                  learning_rate='constant', learning_rate_init=0.1, solver='adam')
+oversamp_multi_nn, oversamp_multi_nn_rmse = build_models(MultiOutputRegressor(nn), X_oversampled, y_oversampled,
+                                                         X_test_multi,
+                                                         y_test_multi)
+
+# export
+export_model(multi_nn, '../res/oversamp_multi_nn.pkl')
 '''
